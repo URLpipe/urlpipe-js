@@ -1,0 +1,66 @@
+{
+  "name": "urlpipe",
+  "version": "0.1.0",
+  "description": "Official JavaScript and TypeScript client for the URLpipe API: turn any URL into Markdown, HTML, a screenshot, metadata, a summary and more.",
+  "keywords": [
+    "urlpipe",
+    "markdown",
+    "html",
+    "screenshot",
+    "metadata",
+    "lighthouse",
+    "scrape",
+    "headless-chrome",
+    "api-client"
+  ],
+  "homepage": "https://urlpipe.dev",
+  "documentation": "https://urlpipe.dev/docs",
+  "bugs": {
+    "url": "https://github.com/URLpipe/urlpipe-js/issues",
+    "email": "contact@urlpipe.dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/URLpipe/urlpipe-js.git"
+  },
+  "license": "MIT",
+  "author": "Aliat Partner S.L. <contact@urlpipe.dev>",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/esm/**/*.js",
+    "dist/esm/**/*.d.ts",
+    "dist/cjs/**/*.js",
+    "dist/cjs/**/*.d.ts",
+    "dist/cjs/package.json"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/write-cjs-package.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "npm run build && npm run typecheck && node --test test/client.test.mjs test/errors.test.mjs test/polling.test.mjs test/retries.test.mjs test/webhook.test.mjs test/cjs.test.cjs test/live.test.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
