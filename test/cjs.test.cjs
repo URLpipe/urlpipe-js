@@ -2,7 +2,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
-test("require('urlpipe') exposes the client, its default and the errors", () => {
+test("require('@urlpipe/sdk') exposes the client, its default and the errors", () => {
   const urlpipe = require("../dist/cjs/index.js");
   assert.equal(typeof urlpipe.Urlpipe, "function");
   assert.equal(urlpipe.default, urlpipe.Urlpipe);

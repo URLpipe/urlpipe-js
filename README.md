@@ -1,4 +1,4 @@
-# urlpipe
+# @urlpipe/sdk
 
 Turn any URL into clean Markdown, rendered HTML, a full-page screenshot, metadata, a summary, keywords, console errors or a Lighthouse audit, from JavaScript or TypeScript. Pages are rendered in real Chrome, so JavaScript-heavy sites come back complete.
 
@@ -7,7 +7,7 @@ The official client for the [URLpipe API](https://urlpipe.dev/docs). TypeScript 
 ## Install
 
 ```sh
-npm install urlpipe
+npm install @urlpipe/sdk
 ```
 
 ## Quickstart
@@ -15,7 +15,7 @@ npm install urlpipe
 Get a project API key from your [URLpipe dashboard](https://urlpipe.dev) (the Free plan gives you 1,000 credits a month, no card needed) and put it in `URLPIPE_API_KEY`.
 
 ```ts
-import Urlpipe from "urlpipe";
+import Urlpipe from "@urlpipe/sdk";
 
 const client = new Urlpipe(); // reads URLPIPE_API_KEY
 
@@ -23,7 +23,7 @@ const { data } = await client.markdown("https://example.com");
 console.log(data); // "# Example Domain\n\n…"
 ```
 
-CommonJS works too: `const { Urlpipe } = require("urlpipe")`.
+CommonJS works too: `const { Urlpipe } = require("@urlpipe/sdk")`.
 
 ## The client
 
@@ -136,7 +136,7 @@ You rarely need `wait` for sync calls. The API holds a sync request for up to 60
 When webhook signing is on for your project, check every delivery before you trust it:
 
 ```ts
-import { verifyWebhook, WebhookVerificationError } from "urlpipe";
+import { verifyWebhook, WebhookVerificationError } from "@urlpipe/sdk";
 
 // Express: use express.raw() on this route, not express.json().
 app.post("/webhooks/urlpipe", express.raw({ type: "application/json" }), async (req, res) => {
@@ -178,7 +178,7 @@ Every error extends `UrlpipeError`, which carries `status`, `code`, `message`, `
 | `WebhookVerificationError` | `verifyWebhook` rejected a delivery. |
 
 ```ts
-import { QuotaExceededError, AnalysisFailedError } from "urlpipe";
+import { QuotaExceededError, AnalysisFailedError } from "@urlpipe/sdk";
 
 try {
   await client.summarize(url);
