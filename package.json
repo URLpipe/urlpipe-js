@@ -24,7 +24,7 @@
     "url": "git+https://github.com/URLpipe/urlpipe-js.git"
   },
   "license": "MIT",
-  "author": "Aliat Partner S.L. <contact@urlpipe.dev>",
+  "author": "URLpipe <contact@urlpipe.dev> (https://urlpipe.dev)",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
