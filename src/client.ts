@@ -111,6 +111,7 @@ function parseMeta(headers: Headers): ResponseMeta {
     },
     concurrencyLimit: numberOrString(headers.get("x-concurrency-limit")),
     resultUrl: headers.get("x-result-url"),
+    finalUrl: headers.get("x-final-url"),
     idempotentReplayed: headers.get("idempotent-replayed")?.trim().toLowerCase() === "true",
   };
 }

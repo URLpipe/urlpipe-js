@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `meta.finalUrl` is the address the page ended on, after its redirects (the `X-Final-Url` header). `Metadata`, `ScrapeResult` and `WebhookPayload` carry it as `final_url` too.
 - `meta` returns the fixed shape of `/meta`, and `Metadata` types every key: `canonical_url`, `title`, `description`, `site_name`, `type`, `language`, `locale`, `authors`, `published_at`, `modified_at`, `image`, `video`, `favicon_url`, `icons`, `logo_url`, `feeds`, `keywords`, `theme_color`, `generator`, `manifest_url`, `robots`, `open_graph`, `twitter`, `alternates`, `oembed_url`, `structured_data_types` — always present, `null` or empty when the page declares nothing. `main_image_url`, `author_name`, `publication_date`, `feed_url` and `additional_author_information` are gone: read `image.url`, `authors`, `published_at` and `feeds`.
 
 ## 0.1.0

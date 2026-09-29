@@ -13,6 +13,7 @@ const PAYLOAD = {
   success: true,
   result: "# Example Domain",
   result_url: null,
+  final_url: "https://example.com/",
   error: null,
   meta: {
     cache: "miss",

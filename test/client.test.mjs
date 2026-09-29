@@ -113,6 +113,7 @@ describe("text operations", () => {
 describe("JSON operations", () => {
   test("meta returns the metadata object", async () => {
     const meta = {
+      final_url: "https://example.com/",
       canonical_url: "https://example.com/",
       title: "Example Domain",
       description: "An example",
@@ -179,6 +180,7 @@ describe("JSON operations", () => {
   test("scrape sends the operations and the options, and returns the scrape object", async () => {
     const result = {
       url: "https://example.com",
+      final_url: "https://example.com/",
       operations: {
         markdown: { success: true, result: "# Example", cached: false },
         meta: { success: true, result: { title: "Example" }, cached: true },
@@ -280,6 +282,7 @@ describe("response meta", () => {
       "X-Cache-Age": "5400",
       "X-Processing-Time-Ms": "12",
       "X-Labels": '{"client":"acme","caf\\u00e9":"ol\\u00e9"}',
+      "X-Final-Url": "https://www.example.com/en/",
       "Idempotent-Replayed": "true",
     });
     const res = await client.markdown("https://example.com");
@@ -290,6 +293,7 @@ describe("response meta", () => {
       quota: { cost: 1, limit: 1000, remaining: 943, overage: 0, resetsAt: "2026-08-31T23:59:59Z" },
       concurrencyLimit: 3,
       resultUrl: null,
+      finalUrl: "https://www.example.com/en/",
       idempotentReplayed: true,
     });
     assert.deepEqual(res.labels, { client: "acme", café: "olé" });
@@ -318,6 +322,7 @@ describe("response meta", () => {
       quota: { cost: null, limit: null, remaining: null, overage: null, resetsAt: null },
       concurrencyLimit: null,
       resultUrl: null,
+      finalUrl: null,
       idempotentReplayed: false,
     });
     assert.equal(res.token, null);

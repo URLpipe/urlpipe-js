@@ -153,6 +153,8 @@ export interface MetadataAlternate {
  * dates ISO 8601.
  */
 export interface Metadata {
+  /** Where the page ended up, after its redirects; relative URLs are resolved against it. */
+  final_url: string | null;
   canonical_url: string | null;
   title: string | null;
   description: string | null;
@@ -224,6 +226,8 @@ export interface ScrapeOperationResult {
 /** The body of `/scrape`. */
 export interface ScrapeResult {
   url: string;
+  /** Where the page ended up, after its redirects. */
+  final_url: string | null;
   /** One entry per operation requested. */
   operations: { [K in ScrapeOperation]?: ScrapeOperationResult };
 }
@@ -264,6 +268,8 @@ export interface ResponseMeta {
   /** A number, or `"unlimited"`. */
   concurrencyLimit: number | string | null;
   resultUrl: string | null;
+  /** Where the page ended up, after its redirects (from `X-Final-Url`), or `null`. */
+  finalUrl: string | null;
   /** `true` when this answer replays an earlier request with the same Idempotency-Key. */
   idempotentReplayed: boolean;
 }
@@ -331,6 +337,8 @@ export interface WebhookPayload {
   success: boolean;
   result: unknown;
   result_url: string | null;
+  /** Where the page ended up, after its redirects. */
+  final_url: string | null;
   error: string | null;
   meta: {
     cache: string | null;

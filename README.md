@@ -106,6 +106,7 @@ Every method resolves to:
     quota: { cost, limit, remaining, overage, resetsAt }, // limit/remaining may be "unlimited"
     concurrencyLimit,
     resultUrl,
+    finalUrl,         // where the page ended up, after its redirects
     idempotentReplayed,
   },
 }
@@ -142,7 +143,7 @@ import { verifyWebhook, WebhookVerificationError } from "@urlpipe/sdk";
 app.post("/webhooks/urlpipe", express.raw({ type: "application/json" }), async (req, res) => {
   try {
     const payload = await verifyWebhook(req.body, req.headers, process.env.URLPIPE_WEBHOOK_SECRET!);
-    // payload: { token, operation, labels, success, result, result_url, error, meta }
+    // payload: { token, operation, labels, success, result, result_url, final_url, error, meta }
     res.sendStatus(200);
   } catch (error) {
     if (error instanceof WebhookVerificationError) return res.sendStatus(401);
