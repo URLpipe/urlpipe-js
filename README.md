@@ -57,7 +57,7 @@ shot.data.mimeType;  // "image/webp"
 shot.data.resultUrl; // a link to the image that needs no API key
 
 const meta = await client.meta("https://example.com");
-meta.data.title; // also description, language, main_image_url, favicon_url, author_name, …
+meta.data.title; // also description, image?.url, authors, published_at, favicon_url, feeds, …
 
 const kw = await client.keywords("https://example.com");  // data: string[]
 const logs = await client.console("https://example.com"); // data: [{ type: "error" | "warning" | "exception", text }]

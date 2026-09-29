@@ -102,17 +102,98 @@ export interface Screenshot {
   resultUrl: string | null;
 }
 
-/** The body of `/meta`. Keys are the API's own. */
+/** One author of the page. */
+export interface MetadataAuthor {
+  name: string;
+  url: string | null;
+  profiles: string[];
+}
+
+/** The page's share image, with what the page declares about it. */
+export interface MetadataImage {
+  url: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+  type: string | null;
+}
+
+/** The page's video. */
+export interface MetadataVideo {
+  url: string;
+  type: string | null;
+  width: number | null;
+  height: number | null;
+}
+
+/** An icon the page declares. */
+export interface MetadataIcon {
+  url: string;
+  rel: string;
+  sizes: string | null;
+  type: string | null;
+}
+
+/** An RSS, Atom or JSON feed. */
+export interface MetadataFeed {
+  url: string;
+  type: string | null;
+  title: string | null;
+}
+
+/** The page in another language. */
+export interface MetadataAlternate {
+  hreflang: string;
+  url: string;
+}
+
+/**
+ * The body of `/meta`. Keys are the API's own, and every one is always present:
+ * a value the page doesn't declare is `null` or an empty list. URLs are absolute,
+ * dates ISO 8601.
+ */
 export interface Metadata {
+  canonical_url: string | null;
   title: string | null;
   description: string | null;
+  site_name: string | null;
+  type: string | null;
   language: string | null;
-  main_image_url: string | null;
+  locale: string | null;
+  authors: MetadataAuthor[];
+  published_at: string | null;
+  modified_at: string | null;
+  image: MetadataImage | null;
+  video: MetadataVideo | null;
   favicon_url: string | null;
-  author_name: string | null;
-  feed_url: string | null;
-  publication_date: string | null;
-  additional_author_information: Record<string, unknown> | null;
+  icons: MetadataIcon[];
+  logo_url: string | null;
+  feeds: MetadataFeed[];
+  keywords: string[];
+  theme_color: string | null;
+  generator: string | null;
+  manifest_url: string | null;
+  robots: { index: boolean; follow: boolean };
+  open_graph: {
+    title: string | null;
+    description: string | null;
+    image: string | null;
+    url: string | null;
+    type: string | null;
+    site_name: string | null;
+    locale: string | null;
+  };
+  twitter: {
+    card: string | null;
+    site: string | null;
+    creator: string | null;
+    title: string | null;
+    description: string | null;
+    image: string | null;
+  };
+  alternates: MetadataAlternate[];
+  oembed_url: string | null;
+  structured_data_types: string[];
   [key: string]: unknown;
 }
 

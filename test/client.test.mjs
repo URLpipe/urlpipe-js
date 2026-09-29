@@ -113,15 +113,32 @@ describe("text operations", () => {
 describe("JSON operations", () => {
   test("meta returns the metadata object", async () => {
     const meta = {
+      canonical_url: "https://example.com/",
       title: "Example Domain",
       description: "An example",
+      site_name: null,
+      type: "website",
       language: "en",
-      main_image_url: null,
+      locale: "en",
+      authors: [],
+      published_at: null,
+      modified_at: null,
+      image: { url: "https://example.com/cover.jpg", width: 1200, height: 630, alt: null, type: null },
+      video: null,
       favicon_url: "https://example.com/favicon.ico",
-      author_name: null,
-      feed_url: null,
-      publication_date: null,
-      additional_author_information: null,
+      icons: [{ url: "https://example.com/favicon.ico", rel: "icon", sizes: null, type: null }],
+      logo_url: null,
+      feeds: [],
+      keywords: [],
+      theme_color: null,
+      generator: null,
+      manifest_url: null,
+      robots: { index: true, follow: true },
+      open_graph: { title: "Example Domain", description: null, image: null, url: null, type: null, site_name: null, locale: null },
+      twitter: { card: null, site: null, creator: null, title: null, description: null, image: null },
+      alternates: [],
+      oembed_url: null,
+      structured_data_types: [],
     };
     stub.reply(200, meta, QUOTA_HEADERS);
     const res = await client.meta("https://example.com");
