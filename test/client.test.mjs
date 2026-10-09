@@ -166,6 +166,20 @@ describe("JSON operations", () => {
     assert.deepEqual(res.data, entries);
   });
 
+  test("technologies returns what the page is built with", async () => {
+    const result = {
+      final_url: "https://example.com/",
+      technologies: [
+        { name: "WordPress", slug: "wordpress", version: "6.4.2", confidence: 100, categories: [{ slug: "cms", name: "CMS" }],
+          website: "https://wordpress.org", description: null, cpe: null, detected_by: ["meta"], implied_by: [] },
+      ],
+    };
+    stub.reply(200, result, QUOTA_HEADERS);
+    const res = await client.technologies("https://example.com");
+    assertCommonRequest(lastRequest(), "/technologies");
+    assert.deepEqual(res.data, result);
+  });
+
   test("lighthouse sends device and include_audits, and no page_options", async () => {
     const report = { url: "https://example.com", fetchTime: "2026-01-01T00:00:00.000Z", device: "desktop", categories: {}, metrics: {} };
     stub.reply(200, report, QUOTA_HEADERS);

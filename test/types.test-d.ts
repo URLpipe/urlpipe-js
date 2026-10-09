@@ -12,6 +12,7 @@ import Urlpipe, {
   type ProcessingResponse,
   type ScrapeResult,
   type Screenshot,
+  type TechnologiesResult,
   type WebhookPayload,
 } from "../src/index.js";
 
@@ -40,6 +41,10 @@ async function checks() {
 
   const logs = await client.console("https://example.com");
   assertType<Equal<typeof logs.data, ConsoleEntry[]>>();
+
+  const tech = await client.technologies("https://example.com");
+  assertType<Equal<typeof tech.data, TechnologiesResult>>();
+  const version: string | null | undefined = tech.data.technologies[0]?.version;
 
   const lh = await client.lighthouse("https://example.com", { device: "desktop", includeAudits: true });
   assertType<Equal<typeof lh.data, LighthouseResult>>();

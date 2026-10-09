@@ -1,6 +1,6 @@
 # @urlpipe/sdk
 
-Turn any URL into clean Markdown, rendered HTML, a full-page screenshot, metadata, a summary, keywords, console errors or a Lighthouse audit, from JavaScript or TypeScript. Pages are rendered in real Chrome, so JavaScript-heavy sites come back complete.
+Turn any URL into clean Markdown, rendered HTML, a full-page screenshot, metadata, a summary, keywords, console errors, a Lighthouse audit or the technologies it is built with, from JavaScript or TypeScript. Pages are rendered in real Chrome, so JavaScript-heavy sites come back complete.
 
 The official client for the [URLpipe API](https://urlpipe.dev/docs). TypeScript types included, zero runtime dependencies, and it runs anywhere `fetch` does: Node 18+, Bun, Deno and Cloudflare Workers.
 
@@ -61,6 +61,9 @@ meta.data.title; // also description, image?.url, authors, published_at, favicon
 
 const kw = await client.keywords("https://example.com");  // data: string[]
 const logs = await client.console("https://example.com"); // data: [{ type: "error" | "warning" | "exception", text }]
+
+const tech = await client.technologies("https://example.com");
+tech.data.technologies; // [{ name: "WordPress", version: "6.4.2", confidence: 100, categories, detected_by, … }]
 
 const audit = await client.lighthouse("https://example.com", { device: "desktop", includeAudits: true });
 audit.data.categories.performance?.score;

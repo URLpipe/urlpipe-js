@@ -230,6 +230,11 @@ export class Urlpipe {
     return this.#analyze("console", url, options) as Promise<ResponseFor<O, OperationData["console"]>>;
   }
 
+  /** What the page is built with: its CMS, frameworks, analytics, CDN, with versions. */
+  technologies<O extends PageRequestOptions = {}>(url: string, options?: O): Promise<ResponseFor<O, OperationData["technologies"]>> {
+    return this.#analyze("technologies", url, options) as Promise<ResponseFor<O, OperationData["technologies"]>>;
+  }
+
   /** A Lighthouse audit. */
   lighthouse<O extends LighthouseRequestOptions = {}>(
     url: string,

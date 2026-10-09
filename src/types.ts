@@ -60,7 +60,7 @@ export interface RequestOptions {
   extra?: Record<string, unknown>;
 }
 
-/** Options for markdown, html, summarize, meta, keywords and console. */
+/** Options for markdown, html, summarize, meta, keywords, console and technologies. */
 export interface PageRequestOptions extends RequestOptions {
   pageOptions?: PageOptions;
 }
@@ -90,6 +90,7 @@ export type ScrapeOperation =
   | "keywords"
   | "screenshot"
   | "console"
+  | "technologies"
   | "lighthouse";
 
 /** A decoded screenshot. */
@@ -204,6 +205,32 @@ export interface ConsoleEntry {
   text: string;
 }
 
+/** One technology a page is built with. Keys are the API's own. */
+export interface Technology {
+  name: string;
+  slug: string;
+  /** The version, when the page gives it away. */
+  version: string | null;
+  /** How sure the detection is, 0–100. */
+  confidence: number;
+  categories: { slug: string; name: string }[];
+  website: string | null;
+  description: string | null;
+  cpe: string | null;
+  /** The signals that gave it away: `headers`, `cookies`, `js`, `meta`, … */
+  detected_by: string[];
+  /** The detected technologies that imply this one. */
+  implied_by: string[];
+}
+
+/** The body of `/technologies`. */
+export interface TechnologiesResult {
+  /** Where the page ended up, after its redirects. */
+  final_url: string | null;
+  /** Every technology detected, most certain first. */
+  technologies: Technology[];
+}
+
 /** The body of `/lighthouse`. Keys are the API's own. */
 export interface LighthouseResult {
   url: string;
@@ -241,6 +268,7 @@ export interface OperationData {
   meta: Metadata;
   keywords: string[];
   console: ConsoleEntry[];
+  technologies: TechnologiesResult;
   lighthouse: LighthouseResult;
   scrape: ScrapeResult;
 }
