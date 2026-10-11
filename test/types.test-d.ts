@@ -11,6 +11,8 @@ import Urlpipe, {
   type Metadata,
   type ProcessingResponse,
   type ScrapeResult,
+  type Extraction,
+  type Pdf,
   type Screenshot,
   type TechnologiesResult,
   type WebhookPayload,
@@ -35,6 +37,23 @@ async function checks() {
   const shot = await client.screenshot("https://example.com", { screenshotOptions: { format: "webp" } });
   assertType<Equal<typeof shot.data, Screenshot>>();
   const bytes: Uint8Array = shot.data.bytes;
+
+  const pdf = await client.pdf("https://example.com", { pdfOptions: { paper_size: "letter", landscape: true } });
+  assertType<Equal<typeof pdf.data, Pdf>>();
+  const pdfBytes: Uint8Array = pdf.data.bytes;
+
+  const extracted = await client.extract(
+    "https://example.com",
+    [
+      { name: "price", type: "number", description: "The current price" },
+      { name: "sizes", type: "array", items: "string" },
+      { name: "seller", type: "object", fields: [{ name: "name", type: "string" }] },
+    ],
+    { instructions: "Prices in euros." },
+  );
+  assertType<Equal<typeof extracted.data, Extraction>>();
+  const queued = await client.extract("https://example.com", [{ name: "price", type: "number" }], { sync: false });
+  assertType<Equal<typeof queued, AcceptedResponse>>();
 
   const kw = await client.keywords("https://example.com", { sync: true });
   assertType<Equal<typeof kw.data, string[]>>();
@@ -79,7 +98,7 @@ async function checks() {
   await client.lighthouse("https://example.com", { pageOptions: { block_ads: true } });
 
   // @ts-expect-error unknown scrape operation
-  await client.scrape("https://example.com", ["pdf"]);
+  await client.scrape("https://example.com", ["gif"]);
 
   // Webhooks.
   const payload: WebhookPayload = await verifyWebhook("{}", new Headers(), "whsec_x");

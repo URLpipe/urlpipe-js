@@ -1,6 +1,6 @@
 # @urlpipe/sdk
 
-Turn any URL into clean Markdown, rendered HTML, a full-page screenshot, metadata, a summary, keywords, console errors, a Lighthouse audit or the technologies it is built with, from JavaScript or TypeScript. Pages are rendered in real Chrome, so JavaScript-heavy sites come back complete.
+Turn any URL into clean Markdown, rendered HTML, a full-page screenshot, a PDF, metadata, a summary, keywords, data in a schema you define, console errors, a Lighthouse audit or the technologies it is built with, from JavaScript or TypeScript. Pages are rendered in real Chrome, so JavaScript-heavy sites come back complete.
 
 The official client for the [URLpipe API](https://urlpipe.dev/docs). TypeScript types included, zero runtime dependencies, and it runs anywhere `fetch` does: Node 18+, Bun, Deno and Cloudflare Workers.
 
@@ -34,6 +34,7 @@ const client = new Urlpipe({
   timeout: 90_000,                // per HTTP request, in ms
   maxRetries: 2,                  // see "Retries and idempotency"
   waitTimeout: 300_000,           // how long a slow sync call keeps polling, in ms
+  userAgent: "my-app/1.2",        // optional: names your program in the User-Agent
   fetch: myFetch,                 // optional: your own fetch implementation
 });
 ```
@@ -56,11 +57,26 @@ shot.data.bytes;     // Uint8Array, already decoded from Base64
 shot.data.mimeType;  // "image/webp"
 shot.data.resultUrl; // a link to the image that needs no API key
 
+const pdf = await client.pdf("https://example.com", {
+  pdfOptions: { paper_size: "letter", landscape: true },
+});
+pdf.data.bytes;     // Uint8Array, the whole rendered page as a PDF
+pdf.data.resultUrl; // a link to the PDF that needs no API key
+
 const meta = await client.meta("https://example.com");
 meta.data.title; // also description, image?.url, authors, published_at, favicon_url, feeds, …
 
 const kw = await client.keywords("https://example.com");  // data: string[]
 const logs = await client.console("https://example.com"); // data: [{ type: "error" | "warning" | "exception", text }]
+
+// Data in a schema you define: exactly these keys, in this order, null where the page gives no value.
+const product = await client.extract("https://example.com/products/trail-shoe", [
+  { name: "name", type: "string" },
+  { name: "price", type: "number", description: "The current price, without the currency" },
+  { name: "in_stock", type: "boolean" },
+  { name: "sizes", type: "array", items: "string" },
+], { instructions: "Ignore the related products." });
+product.data.price; // 89.5
 
 const tech = await client.technologies("https://example.com");
 tech.data.technologies; // [{ name: "WordPress", version: "6.4.2", confidence: 100, categories, detected_by, … }]
@@ -73,7 +89,9 @@ const all = await client.scrape("https://example.com", ["markdown", "meta", "scr
 all.data.operations.markdown?.result; // each entry: { success, result, error, cached }
 ```
 
-Saving a screenshot in Node: `await fs.promises.writeFile("page.png", shot.data.bytes)`. Inside a `scrape` result a screenshot stays the Base64 string the API sent.
+Saving a screenshot in Node: `await fs.promises.writeFile("page.png", shot.data.bytes)`. A PDF saves the same way. Inside a `scrape` result a screenshot or a PDF stays the Base64 string the API sent.
+
+A field's `type` is `string`, `number`, `integer`, `boolean`, `date`, `datetime`, `url`, `email`, `object` (with its own `fields`) or `array` (with `items`).
 
 ### Options
 
@@ -90,7 +108,7 @@ Every analysis method takes these:
 | `idempotencyKey` | `Idempotency-Key` header | See below. |
 | `extra` | merged into the body | For API parameters this version doesn't know yet. |
 
-`screenshot` and `scrape` also take `screenshotOptions`; `lighthouse` and `scrape` take `device` and `includeAudits`. The `pageOptions` and `screenshotOptions` maps go to the API unchanged, so their keys keep the API's names: `{ block_cookie_banners: true }`, `{ full_page: false }`. See [page options](https://urlpipe.dev/docs/page-options) and [screenshot options](https://urlpipe.dev/docs/screenshot#options).
+`screenshot` and `scrape` also take `screenshotOptions`; `pdf` and `scrape` take `pdfOptions`; `extract` takes `instructions`, and `scrape` takes `fields` and `instructions` for its `extract` operation; `lighthouse` and `scrape` take `device` and `includeAudits`. The `pageOptions`, `screenshotOptions` and `pdfOptions` maps go to the API unchanged, so their keys keep the API's names: `{ block_cookie_banners: true }`, `{ full_page: false }`, `{ paper_size: "a4" }`. See [page options](https://urlpipe.dev/docs/page-options), [screenshot options](https://urlpipe.dev/docs/screenshot#options) and [PDF options](https://urlpipe.dev/docs/pdf#options).
 
 ### The response
 
@@ -131,7 +149,7 @@ done.data.categories;
 
 `wait(token, { operation, timeout, interval })` polls every 2 seconds until the result is ready, and throws `WaitTimeoutError` (carrying the token) if `timeout` passes first. `result(token, { operation })` fetches once: a result still running comes back with `status: "processing"`, not an error.
 
-Pass `operation` so `data` is typed and decoded like the original call. Without it JSON is parsed and text stays text, so `wait(token)` for a screenshot gives you the Base64 string; `wait(token, { operation: "screenshot" })` gives you the bytes.
+Pass `operation` so `data` is typed and decoded like the original call. Without it JSON is parsed and text stays text, so `wait(token)` for a screenshot or a PDF gives you the Base64 string; `wait(token, { operation: "screenshot" })` or `{ operation: "pdf" }` gives you the bytes.
 
 You rarely need `wait` for sync calls. The API holds a sync request for up to 60 seconds; when an analysis runs longer it answers with a token instead, and the client polls for the result for you (up to `waitTimeout`). Your `await` just takes longer.
 

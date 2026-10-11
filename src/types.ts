@@ -11,6 +11,7 @@ export interface PageOptions {
   delay?: number;
   block_ads?: boolean;
   block_cookie_banners?: boolean;
+  block_popups?: boolean;
   remove_selectors?: string[];
   [key: string]: unknown;
 }
@@ -34,6 +35,54 @@ export interface ScreenshotOptions {
   hide_selectors?: string[];
   styles?: string;
   [key: string]: unknown;
+}
+
+/**
+ * `pdf_options`: the paper, orientation, margins and look of a PDF. Sent to the
+ * API exactly as given, so keys use the API's snake_case names.
+ * See https://urlpipe.dev/docs/pdf#options
+ */
+export interface PdfOptions {
+  paper_size?: "letter" | "legal" | "tabloid" | "a3" | "a4" | "a5";
+  landscape?: boolean;
+  print_background?: boolean;
+  /** Percent, 10–200. */
+  scale?: number;
+  /** Millimetres on every side, 0–50. */
+  margin?: number;
+  /** `print` uses the page's print stylesheet; `screen` prints it as a browser shows it. */
+  media?: "print" | "screen";
+  /** One page as wide as the window and as tall as the document, instead of sheets. */
+  single_page?: boolean;
+  [key: string]: unknown;
+}
+
+export type ExtractFieldType =
+  | "string"
+  | "number"
+  | "integer"
+  | "boolean"
+  | "date"
+  | "datetime"
+  | "url"
+  | "email"
+  | "object"
+  | "array";
+
+/**
+ * One field of an `extract` schema. Sent to the API exactly as given.
+ * See https://urlpipe.dev/docs/extract
+ */
+export interface ExtractField {
+  /** The key in the result. */
+  name: string;
+  type: ExtractFieldType;
+  /** What to take from the page. */
+  description?: string;
+  /** An object's fields. */
+  fields?: ExtractField[];
+  /** What an array holds: a type name, or a field without a name. */
+  items?: Exclude<ExtractFieldType, "array"> | Omit<ExtractField, "name">;
 }
 
 /** Options every analysis method takes. */
@@ -60,13 +109,22 @@ export interface RequestOptions {
   extra?: Record<string, unknown>;
 }
 
-/** Options for markdown, html, summarize, meta, keywords, console and technologies. */
+/** Options for markdown, html, summarize, meta, keywords, extract, console and technologies. */
 export interface PageRequestOptions extends RequestOptions {
   pageOptions?: PageOptions;
 }
 
 export interface ScreenshotRequestOptions extends PageRequestOptions {
   screenshotOptions?: ScreenshotOptions;
+}
+
+export interface PdfRequestOptions extends PageRequestOptions {
+  pdfOptions?: PdfOptions;
+}
+
+export interface ExtractRequestOptions extends PageRequestOptions {
+  /** Guidance for the extraction, in plain words. */
+  instructions?: string;
 }
 
 export type LighthouseDevice = "mobile" | "desktop";
@@ -80,6 +138,11 @@ export interface ScrapeRequestOptions extends PageRequestOptions {
   device?: LighthouseDevice;
   includeAudits?: boolean;
   screenshotOptions?: ScreenshotOptions;
+  pdfOptions?: PdfOptions;
+  /** The schema of the `extract` operation. */
+  fields?: readonly ExtractField[];
+  /** Guidance for the `extract` operation, in plain words. */
+  instructions?: string;
 }
 
 export type ScrapeOperation =
@@ -89,6 +152,8 @@ export type ScrapeOperation =
   | "summarize"
   | "keywords"
   | "screenshot"
+  | "pdf"
+  | "extract"
   | "console"
   | "technologies"
   | "lighthouse";
@@ -102,6 +167,19 @@ export interface Screenshot {
   /** A link to the image that needs no API key (from `X-Result-Url`), or `null`. */
   resultUrl: string | null;
 }
+
+/** A decoded PDF of the page. */
+export interface Pdf {
+  /** The PDF itself. */
+  bytes: Uint8Array;
+  /** `application/pdf`. */
+  mimeType: string;
+  /** A link to the PDF that needs no API key (from `X-Result-Url`), or `null`. */
+  resultUrl: string | null;
+}
+
+/** The body of `/extract`: one key per requested field, in order, `null` where the page gives no value. */
+export type Extraction = Record<string, unknown>;
 
 /** One author of the page. */
 export interface MetadataAuthor {
@@ -265,8 +343,10 @@ export interface OperationData {
   html: string;
   summarize: string;
   screenshot: Screenshot;
+  pdf: Pdf;
   meta: Metadata;
   keywords: string[];
+  extract: Extraction;
   console: ConsoleEntry[];
   technologies: TechnologiesResult;
   lighthouse: LighthouseResult;

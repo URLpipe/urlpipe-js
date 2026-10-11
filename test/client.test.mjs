@@ -47,6 +47,15 @@ describe("construction", () => {
     assert.equal(VERSION, pkg.version);
   });
 
+  test("userAgent goes in front of the client's own; blank keeps the default", async () => {
+    stub.reply(200, "# Hi");
+    stub.reply(200, "# Hi");
+    await new Urlpipe({ apiKey: "test_key", baseUrl: stub.url, userAgent: "my-app/1.2" }).markdown("https://example.com");
+    assert.equal(lastRequest().headers["user-agent"], `my-app/1.2 urlpipe-js/${pkg.version}`);
+    await new Urlpipe({ apiKey: "test_key", baseUrl: stub.url, userAgent: "  " }).markdown("https://example.com");
+    assert.equal(lastRequest().headers["user-agent"], `urlpipe-js/${pkg.version}`);
+  });
+
   test("reads the API key from URLPIPE_API_KEY", async () => {
     process.env.URLPIPE_API_KEY = "env_key";
     try {
@@ -180,6 +189,23 @@ describe("JSON operations", () => {
     assert.deepEqual(res.data, result);
   });
 
+  test("extract sends the fields and instructions, and returns the object", async () => {
+    const fields = [
+      { name: "name", type: "string", description: "The product's name" },
+      { name: "price", type: "number" },
+      { name: "sizes", type: "array", items: "string" },
+    ];
+    const result = { name: "Trail Shoe", price: 89.5, sizes: null };
+    stub.reply(200, result, QUOTA_HEADERS);
+    const res = await client.extract("https://example.com", fields, { instructions: "Prices in euros." });
+    const req = lastRequest();
+    assertCommonRequest(req, "/extract");
+    assert.deepEqual(req.body.fields, fields);
+    assert.equal(req.body.instructions, "Prices in euros.");
+    assert.deepEqual(res.data, result);
+    assert.deepEqual(Object.keys(res.data), ["name", "price", "sizes"]);
+  });
+
   test("lighthouse sends device and include_audits, and no page_options", async () => {
     const report = { url: "https://example.com", fetchTime: "2026-01-01T00:00:00.000Z", device: "desktop", categories: {}, metrics: {} };
     stub.reply(200, report, QUOTA_HEADERS);
@@ -205,6 +231,9 @@ describe("JSON operations", () => {
       device: "mobile",
       includeAudits: false,
       screenshotOptions: { format: "webp" },
+      pdfOptions: { landscape: true },
+      fields: [{ name: "price", type: "number" }],
+      instructions: "Prices in euros.",
       pageOptions: { block_ads: true },
     });
     const req = lastRequest();
@@ -213,6 +242,9 @@ describe("JSON operations", () => {
     assert.equal(req.body.device, "mobile");
     assert.equal(req.body.include_audits, false);
     assert.deepEqual(req.body.screenshot_options, { format: "webp" });
+    assert.deepEqual(req.body.pdf_options, { landscape: true });
+    assert.deepEqual(req.body.fields, [{ name: "price", type: "number" }]);
+    assert.equal(req.body.instructions, "Prices in euros.");
     assert.deepEqual(req.body.page_options, { block_ads: true });
     assert.deepEqual(res.data, result);
     assert.equal(res.meta.cache, "partial");
@@ -380,6 +412,29 @@ describe("screenshot", () => {
     const res = await client.screenshot("https://example.com");
     assert.equal(Buffer.compare(Buffer.from(res.data.bytes), Buffer.from(bytes)), 0);
     assert.equal(res.data.resultUrl, null);
+  });
+});
+
+describe("pdf", () => {
+  test("decodes Base64 and carries the result URL", async () => {
+    const bytes = Uint8Array.from(Buffer.from("%PDF-1.4\n%%EOF"));
+    stub.reply(200, b64(bytes) + "\n", { ...QUOTA_HEADERS, "X-Result-Url": "https://urlpipe.dev/r/abc.pdf" });
+    const res = await client.pdf("https://example.com", { pdfOptions: { paper_size: "letter" } });
+    const req = lastRequest();
+    assertCommonRequest(req, "/pdf");
+    assert.deepEqual(req.body.pdf_options, { paper_size: "letter" });
+    assert.ok(res.data.bytes instanceof Uint8Array);
+    assert.deepEqual(Array.from(res.data.bytes), Array.from(bytes));
+    assert.equal(res.data.mimeType, "application/pdf");
+    assert.equal(res.data.resultUrl, "https://urlpipe.dev/r/abc.pdf");
+    assert.equal(res.meta.resultUrl, "https://urlpipe.dev/r/abc.pdf");
+  });
+
+  test("result with the pdf hint decodes it", async () => {
+    const bytes = Uint8Array.from(Buffer.from("%PDF-1.4\n%%EOF"));
+    stub.reply(200, b64(bytes));
+    const res = await client.result("tok", { operation: "pdf" });
+    assert.deepEqual(Array.from(res.data.bytes), Array.from(bytes));
   });
 });
 

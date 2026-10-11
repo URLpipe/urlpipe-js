@@ -12,11 +12,14 @@ import type {
   AcceptedResponse,
   CompletedResponse,
   DataFor,
+  ExtractField,
+  ExtractRequestOptions,
   Labels,
   LighthouseRequestOptions,
   Operation,
   OperationData,
   PageRequestOptions,
+  PdfRequestOptions,
   ProcessingResponse,
   ResponseFor,
   ResponseMeta,
@@ -43,6 +46,11 @@ export interface ClientOptions {
   maxRetries?: number;
   /** How long a call keeps polling for a result that outlived the sync window, in milliseconds. Default 300000. */
   waitTimeout?: number;
+  /**
+   * Your program's product token, such as `"my-app/1.2"`. It goes in front of
+   * the client's own, so requests identify both: `my-app/1.2 urlpipe-js/<version>`.
+   */
+  userAgent?: string;
   /** A `fetch` implementation to use instead of the global one. */
   fetch?: FetchFunction;
 }
@@ -148,6 +156,9 @@ function parseData(operation: Operation | undefined, raw: RawResponse): unknown 
     const bytes = decodeBase64(raw.text.trim());
     return { bytes, mimeType: detectImageMime(bytes), resultUrl: raw.headers.get("x-result-url") };
   }
+  if (operation === "pdf") {
+    return { bytes: decodeBase64(raw.text.trim()), mimeType: "application/pdf", resultUrl: raw.headers.get("x-result-url") };
+  }
   return parseJsonResult(raw.text, raw);
 }
 
@@ -169,6 +180,7 @@ export class Urlpipe {
   /** @internal The first backoff step in ms (1000). Tests shrink it. */
   _retryBaseMs = 1000;
   readonly #apiKey: string;
+  readonly #userAgent: string;
   readonly #fetch: FetchFunction;
 
   constructor(options: ClientOptions = {}) {
@@ -185,6 +197,8 @@ export class Urlpipe {
       throw new ConfigurationError("No fetch function. Use Node 18 or later, or pass { fetch }.");
     }
     this.#apiKey = apiKey;
+    const product = options.userAgent?.trim();
+    this.#userAgent = product ? `${product} ${USER_AGENT}` : USER_AGENT;
     this.#fetch = fetchFn;
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
@@ -215,6 +229,11 @@ export class Urlpipe {
     return this.#analyze("screenshot", url, options) as Promise<ResponseFor<O, OperationData["screenshot"]>>;
   }
 
+  /** The whole rendered page as a PDF, decoded to bytes. */
+  pdf<O extends PdfRequestOptions = {}>(url: string, options?: O): Promise<ResponseFor<O, OperationData["pdf"]>> {
+    return this.#analyze("pdf", url, options) as Promise<ResponseFor<O, OperationData["pdf"]>>;
+  }
+
   /** Title, description, language, images, author and more. */
   meta<O extends PageRequestOptions = {}>(url: string, options?: O): Promise<ResponseFor<O, OperationData["meta"]>> {
     return this.#analyze("meta", url, options) as Promise<ResponseFor<O, OperationData["meta"]>>;
@@ -223,6 +242,18 @@ export class Urlpipe {
   /** The page's keywords. */
   keywords<O extends PageRequestOptions = {}>(url: string, options?: O): Promise<ResponseFor<O, string[]>> {
     return this.#analyze("keywords", url, options) as Promise<ResponseFor<O, string[]>>;
+  }
+
+  /**
+   * Data from the page in the schema `fields` describes: one key per field,
+   * in order, `null` where the page gives no value.
+   */
+  extract<O extends ExtractRequestOptions = {}>(
+    url: string,
+    fields: readonly ExtractField[],
+    options?: O,
+  ): Promise<ResponseFor<O, OperationData["extract"]>> {
+    return this.#analyze("extract", url, { ...options, fields }) as Promise<ResponseFor<O, OperationData["extract"]>>;
   }
 
   /** Console errors, warnings and uncaught exceptions the page produced. */
@@ -256,7 +287,7 @@ export class Urlpipe {
    * Fetches a result by token, once. A result still running comes back as a
    * `"processing"` response, not an error. Pass `{ operation }` to have `data`
    * typed and decoded as that operation's result: without it JSON is parsed
-   * and text stays text, so a screenshot stays Base64.
+   * and text stays text, so a screenshot or a PDF stays Base64.
    */
   async result<Op extends Operation | undefined = undefined>(
     token: string,
@@ -313,6 +344,9 @@ export class Urlpipe {
     if (operations !== undefined) body.operations = operations;
     if (options.pageOptions !== undefined) body.page_options = options.pageOptions;
     if (options.screenshotOptions !== undefined) body.screenshot_options = options.screenshotOptions;
+    if (options.pdfOptions !== undefined) body.pdf_options = options.pdfOptions;
+    if (options.fields !== undefined) body.fields = options.fields;
+    if (options.instructions !== undefined) body.instructions = options.instructions;
     if (options.device !== undefined) body.device = options.device;
     if (options.includeAudits !== undefined) body.include_audits = options.includeAudits;
     if (options.maxAge !== undefined) body.max_age = options.maxAge;
@@ -364,7 +398,7 @@ export class Urlpipe {
   ): Promise<RawResponse> {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.#apiKey}`,
-      "User-Agent": USER_AGENT,
+      "User-Agent": this.#userAgent,
       Accept: "application/json, text/plain, */*",
     };
     if (body !== undefined) headers["Content-Type"] = "application/json";

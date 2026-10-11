@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `pdf` returns the whole rendered page as a PDF (`POST /pdf`), decoded to bytes: a `Pdf` with `bytes`, `mimeType` and `resultUrl`. `pdfOptions` (`PdfOptions`) choose the paper, orientation, margins, scale, backgrounds, the print or screen stylesheet and `single_page`.
+- `extract` returns data from a page in a schema you define (`POST /extract`): pass `fields` (`ExtractField[]`) and get an object with exactly those keys, in order, `null` where the page gives no value. `instructions` adds guidance in plain words.
+- `scrape` takes `pdfOptions`, `fields` and `instructions`, and `"pdf"` and `"extract"` are `ScrapeOperation`s.
+- `PageOptions` names `block_popups`.
+- `userAgent` on the client names the program making the requests; the User-Agent then reads `<product> urlpipe-js/<version>`.
 - `technologies` detects what a page is built with (`POST /technologies`): its CMS, frameworks, analytics, CDN and web server, each with its version, a confidence and the signals it was detected by. `TechnologiesResult` and `Technology` type the result, and `"technologies"` is a `ScrapeOperation`.
 - `meta.finalUrl` is the address the page ended on, after its redirects (the `X-Final-Url` header). `Metadata`, `ScrapeResult` and `WebhookPayload` carry it as `final_url` too.
 - `meta` returns the fixed shape of `/meta`, and `Metadata` types every key: `canonical_url`, `title`, `description`, `site_name`, `type`, `language`, `locale`, `authors`, `published_at`, `modified_at`, `image`, `video`, `favicon_url`, `icons`, `logo_url`, `feeds`, `keywords`, `theme_color`, `generator`, `manifest_url`, `robots`, `open_graph`, `twitter`, `alternates`, `oembed_url`, `structured_data_types` — always present, `null` or empty when the page declares nothing. `main_image_url`, `author_name`, `publication_date`, `feed_url` and `additional_author_information` are gone: read `image.url`, `authors`, `published_at` and `feeds`.
