@@ -8,6 +8,7 @@ export type Labels = Record<string, string>;
  */
 export interface PageOptions {
   wait_for_selector?: string;
+  scroll_to_bottom?: boolean;
   delay?: number;
   block_ads?: boolean;
   block_cookie_banners?: boolean;

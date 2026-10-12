@@ -1,6 +1,6 @@
 {
   "name": "@urlpipe/sdk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Official JavaScript and TypeScript client for the URLpipe API: turn any URL into Markdown, HTML, a screenshot, metadata, a summary and more.",
   "keywords": [
     "urlpipe",

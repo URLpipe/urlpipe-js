@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- `PageOptions` names `scroll_to_bottom`: scroll the page before it is read, for as long as scrolling loads more.
+
 ## 0.2.0
 
 - `pdf` returns the whole rendered page as a PDF (`POST /pdf`), decoded to bytes: a `Pdf` with `bytes`, `mimeType` and `resultUrl`. `pdfOptions` (`PdfOptions`) choose the paper, orientation, margins, scale, backgrounds, the print or screen stylesheet and `single_page`.
