@@ -1,3 +1,4 @@
+import type { NextPlan } from "./types.js";
 import { isObject } from "./util.js";
 
 export interface UrlpipeErrorFields {
@@ -53,22 +54,35 @@ export class NotFoundError extends UrlpipeError {}
 /** 410 `stale`: the result is older than the 30-day retention window. */
 export class StaleResultError extends UrlpipeError {}
 
+/** What a 429 `quota_exceeded` or `concurrency_limit` says about upgrading. */
+export interface UpgradeFields {
+  nextPlan?: NextPlan | null;
+  upgradeUrl?: string | null;
+}
+
 /** 429 `quota_exceeded`: the Free plan's monthly credits are spent. */
 export class QuotaExceededError extends UrlpipeError {
   readonly limit: number | null;
   readonly used: number | null;
   readonly needed: number | null;
   readonly resetsAt: string | null;
+  /** The next plan up, or `null` when there is none. */
+  readonly nextPlan: NextPlan | null;
+  /** Where to upgrade, or `null`. */
+  readonly upgradeUrl: string | null;
 
   constructor(
     message: string,
-    fields: UrlpipeErrorFields & { limit?: number | null; used?: number | null; needed?: number | null; resetsAt?: string | null },
+    fields: UrlpipeErrorFields &
+      UpgradeFields & { limit?: number | null; used?: number | null; needed?: number | null; resetsAt?: string | null },
   ) {
     super(message, fields);
     this.limit = fields.limit ?? null;
     this.used = fields.used ?? null;
     this.needed = fields.needed ?? null;
     this.resetsAt = fields.resetsAt ?? null;
+    this.nextPlan = fields.nextPlan ?? null;
+    this.upgradeUrl = fields.upgradeUrl ?? null;
   }
 }
 
@@ -76,11 +90,20 @@ export class QuotaExceededError extends UrlpipeError {
 export class ConcurrencyLimitError extends UrlpipeError {
   readonly limit: number | string | null;
   readonly running: number | null;
+  /** The next plan up, or `null` when there is none. */
+  readonly nextPlan: NextPlan | null;
+  /** Where to upgrade, or `null`. */
+  readonly upgradeUrl: string | null;
 
-  constructor(message: string, fields: UrlpipeErrorFields & { limit?: number | string | null; running?: number | null }) {
+  constructor(
+    message: string,
+    fields: UrlpipeErrorFields & UpgradeFields & { limit?: number | string | null; running?: number | null },
+  ) {
     super(message, fields);
     this.limit = fields.limit ?? null;
     this.running = fields.running ?? null;
+    this.nextPlan = fields.nextPlan ?? null;
+    this.upgradeUrl = fields.upgradeUrl ?? null;
   }
 }
 
@@ -120,6 +143,14 @@ const CODE_SHAPE = /^[a-z][a-z0-9_]*$/;
 
 function numberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** `next_plan` as the body gives it, and `upgrade_url`; each `null` when the body has none. */
+function upgradeFields(obj: Record<string, unknown>): UpgradeFields {
+  return {
+    nextPlan: isObject(obj.next_plan) ? (obj.next_plan as unknown as NextPlan) : null,
+    upgradeUrl: typeof obj.upgrade_url === "string" ? obj.upgrade_url : null,
+  };
 }
 
 /** For a /scrape body whose every operation failed: "Every operation failed: <op>: <error>; …". */
@@ -174,6 +205,7 @@ export function errorFromResponse(
         used: numberOrNull(obj.used),
         needed: numberOrNull(obj.needed),
         resetsAt: typeof obj.resets_at === "string" ? obj.resets_at : null,
+        ...upgradeFields(obj),
       });
     }
     if (code === "concurrency_limit") {
@@ -181,6 +213,7 @@ export function errorFromResponse(
         ...fields,
         limit: typeof obj.limit === "number" || typeof obj.limit === "string" ? obj.limit : null,
         running: numberOrNull(obj.running),
+        ...upgradeFields(obj),
       });
     }
     if (code === "rate_limited") {

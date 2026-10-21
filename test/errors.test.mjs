@@ -21,6 +21,8 @@ import { startStub } from "./helpers/stub-server.mjs";
 let stub;
 let client;
 
+const NEXT_PLAN = { name: "Starter", monthly_price_cents: 1900, monthly_credits: 20000, max_concurrent_requests: 3 };
+
 before(async () => {
   stub = await startStub();
 });
@@ -183,6 +185,8 @@ describe("error mapping", () => {
       used: 990,
       needed: 17,
       resets_at: "2026-10-01T00:00:00Z",
+      next_plan: NEXT_PLAN,
+      upgrade_url: "https://urlpipe.dev/app/billing/plans",
     });
     await expectError(client.summarize("https://example.com"), QuotaExceededError, (e) => {
       assert.equal(e.status, 429);
@@ -191,14 +195,41 @@ describe("error mapping", () => {
       assert.equal(e.used, 990);
       assert.equal(e.needed, 17);
       assert.equal(e.resetsAt, "2026-10-01T00:00:00Z");
+      assert.deepEqual(e.nextPlan, NEXT_PLAN);
+      assert.equal(e.upgradeUrl, "https://urlpipe.dev/app/billing/plans");
     });
   });
 
-  test("429 concurrency_limit → ConcurrencyLimitError with limit and running", async () => {
-    stub.reply(429, { error: "concurrency_limit", message: "3 are already running.", limit: 3, running: 3 });
+  test("429 quota_exceeded without next_plan or upgrade_url → both null", async () => {
+    stub.reply(429, { error: "quota_exceeded", limit: 1000, used: 1000, needed: 1, resets_at: "2026-10-01T00:00:00Z" });
+    await expectError(client.markdown("https://example.com"), QuotaExceededError, (e) => {
+      assert.equal(e.nextPlan, null);
+      assert.equal(e.upgradeUrl, null);
+    });
+  });
+
+  test("429 concurrency_limit → ConcurrencyLimitError with limit, running, nextPlan and upgradeUrl", async () => {
+    stub.reply(429, {
+      error: "concurrency_limit",
+      message: "3 are already running.",
+      limit: 3,
+      running: 3,
+      next_plan: NEXT_PLAN,
+      upgrade_url: "https://urlpipe.dev/app/billing/plans",
+    });
     await expectError(client.markdown("https://example.com"), ConcurrencyLimitError, (e) => {
       assert.equal(e.limit, 3);
       assert.equal(e.running, 3);
+      assert.deepEqual(e.nextPlan, NEXT_PLAN);
+      assert.equal(e.upgradeUrl, "https://urlpipe.dev/app/billing/plans");
+    });
+  });
+
+  test("429 concurrency_limit without next_plan or upgrade_url → both null", async () => {
+    stub.reply(429, { error: "concurrency_limit", limit: 3, running: 3 });
+    await expectError(client.markdown("https://example.com"), ConcurrencyLimitError, (e) => {
+      assert.equal(e.nextPlan, null);
+      assert.equal(e.upgradeUrl, null);
     });
   });
 

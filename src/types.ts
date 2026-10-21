@@ -367,6 +367,17 @@ export interface Quota {
   resetsAt: string | null;
 }
 
+/**
+ * The next plan up, from a 429 `quota_exceeded` or `concurrency_limit` body.
+ * Keys are the API's own.
+ */
+export interface NextPlan {
+  name: string;
+  monthly_price_cents: number;
+  monthly_credits: number;
+  max_concurrent_requests: number;
+}
+
 /** Parsed response headers. A missing header is `null`. */
 export interface ResponseMeta {
   /** `"hit"`, `"miss"` or (scrape only) `"partial"`. */

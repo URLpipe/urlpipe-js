@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- `QuotaExceededError` and `ConcurrencyLimitError` carry `nextPlan`, the next plan up (a `NextPlan`: `name`, `monthly_price_cents`, `monthly_credits`, `max_concurrent_requests`), and `upgradeUrl`, where to upgrade. Each is `null` when the API names none.
+
 ## 0.2.1
 
 - `PageOptions` names `scroll_to_bottom`: scroll the page before it is read, for as long as scrolling loads more.

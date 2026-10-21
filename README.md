@@ -189,8 +189,8 @@ Every error extends `UrlpipeError`, which carries `status`, `code`, `message`, `
 | `EmailUnverifiedError` | 403: confirm the email address on your account. |
 | `InvalidRequestError` | 422 with a parameter code: `invalid_url`, `invalid_max_age`, `invalid_options`, `invalid_labels`, `invalid_idempotency_key`, `idempotency_key_reused`, or a `report_to` we won't deliver to. |
 | `AnalysisFailedError` | 422: the page couldn't be analysed. The message says why. For a `scrape` where every operation failed, the message lists each one (`Every operation failed: markdown: …; meta: …`) and `body` holds the scrape object. |
-| `QuotaExceededError` | 429: the Free plan's credits are spent. Has `limit`, `used`, `needed`, `resetsAt`. |
-| `ConcurrencyLimitError` | 429: as many requests are running as your plan allows. Has `limit`, `running`. |
+| `QuotaExceededError` | 429: the Free plan's credits are spent. Has `limit`, `used`, `needed`, `resetsAt`, `nextPlan` (the next plan up: `name`, `monthly_price_cents`, `monthly_credits`, `max_concurrent_requests`, or `null`) and `upgradeUrl` (or `null`). |
+| `ConcurrencyLimitError` | 429: as many requests are running as your plan allows. Has `limit`, `running`, `nextPlan` and `upgradeUrl`. |
 | `RateLimitedError` | 429: slow down. Has `retryAfter` (seconds). |
 | `NotFoundError` | 404: no result for that token. |
 | `StaleResultError` | 410: the result is past the 30-day retention window. |

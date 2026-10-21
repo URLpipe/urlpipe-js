@@ -9,6 +9,7 @@ import Urlpipe, {
   type ConsoleEntry,
   type LighthouseResult,
   type Metadata,
+  type NextPlan,
   type ProcessingResponse,
   type ScrapeResult,
   type Extraction,
@@ -106,6 +107,11 @@ async function checks() {
 
   // Errors.
   const error: unknown = new QuotaExceededError("x", { limit: 1 });
+  if (error instanceof QuotaExceededError) {
+    const nextPlan: NextPlan | null = error.nextPlan;
+    const upgradeUrl: string | null = error.upgradeUrl;
+    const cents: number | undefined = nextPlan?.monthly_price_cents;
+  }
   if (error instanceof UrlpipeError) {
     const status: number | null = error.status;
     const code: string | null = error.code;
